@@ -1,0 +1,155 @@
+package main
+
+import (
+	"fmt"
+	"math/rand"
+)
+
+func displayPlayArea(T [][]string) {
+	fmt.Println("  0   1   2   3   4   5   6   7   8   9")
+	for i := 0; i < len(T); i++ {
+		for j := 0; j < len(T[i]); j++ {
+			fmt.Printf("%s ", T[i][j])
+		}
+		fmt.Println()
+	}
+}
+
+func generateShipTiles(upOrDown int, shipSize int, usedTiles [][]int) [][]int {
+	var shipTiles [][]int
+
+	for {
+		if upOrDown == 0 {
+			shipPositionX := rand.Intn(10 - shipSize + 1)
+			shipPositionY := rand.Intn(10)
+
+			shipTiles = [][]int{
+				{shipPositionX, shipPositionY},
+				{shipPositionX + 1, shipPositionY},
+				{shipPositionX + 2, shipPositionY},
+				{shipPositionX + 3, shipPositionY},
+			}
+		} else {
+			shipPositionX := rand.Intn(10)
+			shipPositionY := rand.Intn(10 - shipSize + 1)
+
+			shipTiles = [][]int{
+				{shipPositionX, shipPositionY},
+				{shipPositionX, shipPositionY + 1},
+				{shipPositionX, shipPositionY + 2},
+				{shipPositionX, shipPositionY + 3},
+			}
+		}
+
+		if !containsAny(usedTiles, shipTiles) {
+			break
+		}
+	}
+
+	return shipTiles
+}
+
+func containsAny(usedTiles [][]int, shipTiles [][]int) bool {
+	for _, tile := range shipTiles {
+		if contains(usedTiles, tile) {
+			return true
+		}
+	}
+	return false
+}
+
+func contains(usedTiles [][]int, tile []int) bool {
+	for _, t := range usedTiles {
+		if t[0] == tile[0] && t[1] == tile[1] {
+			return true
+		}
+	}
+	return false
+}
+
+func main() {
+
+	// Play area initialization
+	T := make([][]string, 10)
+	for i := range T {
+		T[i] = make([]string, 10)
+		for j := range T[i] {
+			T[i][j] = "|__"
+		}
+		T[i][9] = "|__|\n"
+	}
+
+	// Aircraft Carrier Generation
+	upOrDown := rand.Intn(2)
+
+	usedTiles := make([][]int, 0)
+
+	aircraftTiles := generateShipTiles(upOrDown, 5, usedTiles)
+	usedTiles = append(usedTiles, aircraftTiles...)
+
+	// Frigate Generation
+	frigateTiles := generateShipTiles(upOrDown, 4, usedTiles)
+	usedTiles = append(usedTiles, frigateTiles...)
+
+	// Cruiser Generation
+	cruiserTiles := generateShipTiles(upOrDown, 3, usedTiles)
+	usedTiles = append(usedTiles, cruiserTiles...)
+
+	// Destroyer Generation
+	destroyerTiles := generateShipTiles(upOrDown, 2, usedTiles)
+	usedTiles = append(usedTiles, destroyerTiles...)
+
+	// Destroyer2 Generation
+	destroyer2Tiles := generateShipTiles(upOrDown, 2, usedTiles)
+	usedTiles = append(usedTiles, destroyer2Tiles...)
+
+	hits := 0
+
+  fmt.Print("Welcome to Battleships!, the game where you try to sink the enemy's ships. You must find and destroy 5 different boats on a 10x10 grid: an Aircraft Carrier which is 5 spaces long, a Frigate which is 4 spaces long, a Cruiser which is 3 spaces long and 2 Destroyers which are 2 spaces long. Developed by 21307114.\nPlease select a difficulty:\n1. Casual\n2. Advanced\n3. Impossible\n")
+
+	displayPlayArea(T)
+
+	for hits <= 16 {
+		var xGuess, yGuess int
+
+		for {
+			fmt.Print("Enter row coordinate (0-9): ")
+			if _, err := fmt.Scan(&xGuess); err != nil || xGuess < 0 || xGuess > 9 {
+				fmt.Println("Please enter a valid row coordinate between 0 and 9.")
+				continue
+			}
+
+			fmt.Print("Enter column coordinate (0-9): ")
+			if _, err := fmt.Scan(&yGuess); err != nil || yGuess < 0 || yGuess > 9 {
+				fmt.Println("Please enter a valid column coordinate between 0 and 9.")
+				continue
+			}
+
+			// Break out of the loop if valid coordinates are entered
+			break
+		}
+
+		guessed := [][]int{{xGuess, yGuess}}
+
+		if containsAny(usedTiles, guessed) {
+			fmt.Println("Hit!")
+			hits++
+			if yGuess == 9 {
+				T[xGuess][yGuess] = "|XX|\n"
+			} else {
+				T[xGuess][yGuess] = "|XX"
+			}
+		} else {
+			fmt.Println("Miss!")
+			if yGuess == 9 {
+				T[xGuess][yGuess] = "|00|\n"
+			} else {
+				T[xGuess][yGuess] = "|00"
+			}
+		}
+
+		displayPlayArea(T)
+	}
+
+	fmt.Println("You hit every ship!")
+}
